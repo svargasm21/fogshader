@@ -15,26 +15,34 @@ let fogLabel;       // readout showing the current near/far distances
 // Fog color is a light blue-grey. background() is set to the SAME color so the
 // star dissolves into the backdrop as it recedes, exactly like the reference.
 const FOG_RGB = [0.53, 0.6, 0.67]; // 0..1 range for the shader
-// The star is pushed to z = -STAR_Z (view-space depth ~STAR_Z at its center),
-// and rotation swings points toward and away from the camera over a range of
-// roughly +/- OUTER_R. The near/far band is tightened around that range so the
-// linear fog curve sweeps nearly its full 0->1 across the shape, making the
-// depth-based gradient read clearly as the star rotates.
-const FOG_NEAR = 420.0;            // nearer than this: no fog (base band start)
-const FOG_FAR = 820.0;             // farther than this: fully fogged (base band end)
 const OBJECT_COLOR = [1.0, 0.85, 0.1]; // Mario-star gold
 
+// Camera distance from the world origin. Set explicitly in setup() so the fog
+// math below does not depend on p5's default camera (which is also z = 800).
+const CAMERA_Z = 800;
+
+// How far the star is pushed back from the world origin (see draw()).
+const STAR_Z = 620;
+
+// View-space depth of the star's center = camera distance + push-back.
+// The fog shader measures depth from the CAMERA, not from the world origin,
+// so the fog band must be placed around this value.
+const STAR_DEPTH = CAMERA_Z + STAR_Z; // 1420
+
+// Rotation swings the star's points roughly +/- (OUTER_R + DEPTH/2) ~ 260
+// units nearer/farther than its center. The base band starts just in front of
+// the nearest point and ends a bit past the farthest, so near tips stay gold
+// and far tips fade strongly into the fog as the star turns.
+const FOG_NEAR = STAR_DEPTH - 250; // nearer than this: no fog
+const FOG_FAR = STAR_DEPTH + 350;  // farther than this: fully fogged
+
 // The slider shifts the whole fog band (near and far together) along view-space
-// depth without changing its width, so the user sweeps the fog in and out
-// across the rotating star. The offset range covers roughly the star's depth
-// swing (+/- OUTER_R around its center) with headroom on either side.
-const FOG_OFFSET_MIN = -300;
-const FOG_OFFSET_MAX = 300;
+// depth without changing its width. At -400 the star is almost fully fogged,
+// at +400 it is almost fog-free.
+const FOG_OFFSET_MIN = -400;
+const FOG_OFFSET_MAX = 400;
 const FOG_OFFSET_DEFAULT = 0;
 const FOG_OFFSET_STEP = 1;
-
-// How far the star sits from the camera along view Z (see draw()).
-const STAR_Z = 620;
 
 // Star dimensions. DEPTH is generous so the extruded thickness itself adds
 // visible near-to-far depth variation independent of rotation.
@@ -50,6 +58,9 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
+
+  // Pin the camera so view-space depth = CAMERA_Z + STAR_Z at the star center.
+  camera(0, 0, CAMERA_Z, 0, 0, 0, 0, 1, 0);
 
   // Build the star geometry exactly once and cache it.
   starGeometry = buildGeometry(() => makeStar(OUTER_R, INNER_R, DEPTH));
