@@ -15,8 +15,11 @@ Linear, depth-based fog:
 1. The vertex shader (`shaders/fog.vert`) transforms each vertex by
    `uModelViewMatrix` into view (eye) space and passes that position to the
    fragment shader as a varying.
-2. The fragment shader (`shaders/fog.frag`) computes the distance from the
-   camera, `dist = length(vViewPosition)`, then a fog factor
+2. The fragment shader (`shaders/fog.frag`) computes the view-space depth,
+   `dist = -vViewPosition.z` (the camera looks down -Z, so negating gives a
+   positive forward distance). This matches the reference demo's depth-based
+   (`gl_FragCoord`) variant, which fogs on view-space depth rather than radial
+   distance. It then computes a fog factor
    `fogAmount = clamp((uFogFar - dist) / (uFogFar - uFogNear), 0.0, 1.0)`, and
    finally `mix(uFogColor.rgb, uObjectColor, fogAmount)`.
 

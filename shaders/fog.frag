@@ -13,9 +13,12 @@ uniform float uFogFar;     // distance at which fog is fully opaque
 uniform vec3 uObjectColor; // the star's base color
 
 void main() {
-  // Distance from the camera to this fragment (depth-based, like gl_FragCoord.z
-  // reconstructed to view-space distance).
-  float dist = length(vViewPosition);
+  // View-space depth of this fragment: distance along the camera's view axis.
+  // In p5/WebGL view space the camera looks down -Z, so negating the view-space
+  // Z gives a positive forward distance. This matches the reference demo's
+  // depth-based (gl_FragCoord) fog, which fogs on linear view-space depth rather
+  // than the radial distance to the camera.
+  float dist = -vViewPosition.z;
 
   // Linear fog factor: 1.0 = fully the object color (near), 0.0 = fully fog (far).
   float fogAmount = clamp((uFogFar - dist) / (uFogFar - uFogNear), 0.0, 1.0);

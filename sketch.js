@@ -13,14 +13,23 @@ let starGeometry;   // cached p5.Geometry for the extruded star
 // Fog color is a light blue-grey. background() is set to the SAME color so the
 // star dissolves into the backdrop as it recedes, exactly like the reference.
 const FOG_RGB = [0.53, 0.6, 0.67]; // 0..1 range for the shader
-const FOG_NEAR = 250.0;            // nearer than this: no fog
-const FOG_FAR = 900.0;             // farther than this: fully fogged
+// The star is pushed to z = -STAR_Z (view-space depth ~STAR_Z at its center),
+// and rotation swings points toward and away from the camera over a range of
+// roughly +/- OUTER_R. The near/far band is tightened around that range so the
+// linear fog curve sweeps nearly its full 0->1 across the shape, making the
+// depth-based gradient read clearly as the star rotates.
+const FOG_NEAR = 420.0;            // nearer than this: no fog
+const FOG_FAR = 820.0;             // farther than this: fully fogged
 const OBJECT_COLOR = [1.0, 0.85, 0.1]; // Mario-star gold
 
-// Star dimensions.
+// How far the star sits from the camera along view Z (see draw()).
+const STAR_Z = 620;
+
+// Star dimensions. DEPTH is generous so the extruded thickness itself adds
+// visible near-to-far depth variation independent of rotation.
 const OUTER_R = 180;
 const INNER_R = 72;
-const DEPTH = 90;
+const DEPTH = 160;
 
 function preload() {
   // loadShader fetches these files over HTTP, so the page must be served
@@ -48,7 +57,7 @@ function draw() {
   // Push the star away from the camera so its depth spans the fog range; the
   // continuous rotation then sweeps points nearer and farther, making the fog
   // visibly vary across the shape.
-  translate(0, 0, -500);
+  translate(0, 0, -STAR_Z);
 
   // Continuous rotation, advanced every frame.
   const t = frameCount * 0.01;
