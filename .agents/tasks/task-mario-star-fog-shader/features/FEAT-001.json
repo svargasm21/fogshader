@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Set up the project skeleton and vendor the p5.js library locally. The sandbox blocks CDNs (cdnjs/jsdelivr return 403) but allows the npm registry (HTTP 200), so p5.js must be downloaded via npm and copied into the repo so the final page has no runtime CDN dependency. This establishes a green baseline: directory layout exists and the library file is present and non-empty.",
+  "status": "completed",
+  "steps": [
+    "Create the project directory layout under /projects/sandbox: shaders/ and lib/ directories.",
+    "Vendor p5.js: in a temp dir run `npm pack p5@1.11.1`, then `tar -xzf p5-1.11.1.tgz`, then copy `package/lib/p5.min.js` to /projects/sandbox/lib/p5.min.js. Confirm the file is non-empty (roughly >1 MB).",
+    "Create a minimal placeholder /projects/sandbox/index.html that loads ./lib/p5.min.js via a relative <script> tag (no https:// CDN URL). It will be fleshed out in FEAT-002.",
+    "Add a .gitignore if helpful (e.g. ignore node_modules, *.tgz, the temp package/ extraction dir) so stray download artifacts are not committed. Do NOT ignore lib/p5.min.js - it is intentionally vendored and committed.",
+    "Verify the baseline: start `python3 -m http.server 8080` from /projects/sandbox and curl /index.html and /lib/p5.min.js, confirming both return HTTP 200."
+  ],
+  "acceptance_criteria": [
+    "/projects/sandbox/lib/p5.min.js exists and is non-empty (greater than 500 KB).",
+    "/projects/sandbox/index.html exists and references ./lib/p5.min.js via a relative path with NO https:// CDN script tag.",
+    "shaders/ directory exists.",
+    "Serving /projects/sandbox over `python3 -m http.server 8080`, curl of /index.html and /lib/p5.min.js both return HTTP 200."
+  ],
+  "verification": [
+    "Run: test -s /projects/sandbox/lib/p5.min.js && wc -c /projects/sandbox/lib/p5.min.js",
+    "Run: grep -q 'cdnjs\\|jsdelivr\\|unpkg\\|https://' /projects/sandbox/index.html && echo 'FAIL: CDN ref found' || echo 'OK: no CDN ref'",
+    "Start `python3 -m http.server 8080` in /projects/sandbox (background), then `curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/index.html` and the same for /lib/p5.min.js; both must print 200."
+  ],
+  "blocked_reason": null,
+  "findings": "Initialized a fresh git repo at /projects/sandbox (none existed). Vendored p5.js 1.11.1 via `npm pack p5@1.11.1` (npm registry reachable, HTTP 200) and copied package/lib/p5.min.js to lib/p5.min.js; file is 1,055,161 bytes (~1.0 MB, >500 KB). Created shaders/ and lib/ dirs; added shaders/.gitkeep so the empty dir is tracked (FEAT-002 fills it with fog.vert/fog.frag). Created placeholder index.html loading ./lib/p5.min.js via a relative tag with NO CDN. Added .gitignore (node_modules/, *.tgz, package/) that does NOT ignore lib/p5.min.js. Verification: `test -s lib/p5.min.js` + wc -c = 1055161; CDN grep on index.html => 'OK: no CDN ref'; shaders/ exists. ENV NOTES for later features: (1) `python3 -m http.server` is flagged by a long-running-command guard, so run it as `( timeout N python3 -m http.server PORT --directory /projects/sandbox >log 2>&1 ) & sleep 2; curl ...; wait` to self-terminate. (2) Port 8080 got stuck in a bound/TIME_WAIT state after a blocked launch attempt; I verified serving on port 8090 instead and curl of /index.html and /lib/p5.min.js both returned HTTP 200. Use port 8090 (or another free port) if 8080 refuses to bind. (3) /tmp does NOT persist between separate execute_bash calls (sandbox isolation) - do pack+extract+copy in a single command. python3 is 3.11.15, node v22, npm available."
+}

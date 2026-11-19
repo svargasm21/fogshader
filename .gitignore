@@ -1,0 +1,5 @@
+node_modules/
+*.tgz
+package/
+
+# lib/p5.min.js is intentionally vendored and committed; do NOT ignore it.
