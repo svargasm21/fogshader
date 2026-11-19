@@ -55,6 +55,16 @@ Then open <http://localhost:8080/> in a WebGL-capable browser. You should see a
 gold five-pointed star rotating in 3D, its far side fading into the blue-grey
 fog.
 
+## Fog slider
+
+A labelled slider in the top-left corner adjusts the fog at runtime. It shifts
+the whole fog band (the `uFogNear` / `uFogFar` distances together, keeping the
+band width fixed) nearer to or farther from the camera. Dragging it toward the
+camera fogs more of the star; dragging it away reveals more of it. The live
+near/far distances are shown in the label above the slider. The slider is a p5
+DOM control (`createSlider`) positioned over the canvas; its value is read each
+frame in `draw()` and fed into the shader's fog uniforms.
+
 ## Why p5.js is vendored
 
 The p5.js library is committed locally at `lib/p5.min.js` (version 1.11.1) rather
@@ -63,10 +73,10 @@ than loaded from a CDN. The sandbox this project was built in blocks general CDN
 self-contained and runnable offline with no runtime CDN dependency. `index.html`
 references it with a relative `<script>` tag.
 
-## Follow-up / out of scope
+## Configuration
 
-An interactive swipe/slider bar to adjust the fog at runtime (for example the
-fog near/far distances or a fog density control) is intentionally **left for
-another partner** and is **not** implemented here. The current fog parameters
-are fixed constants in `sketch.js` (`FOG_NEAR`, `FOG_FAR`, `FOG_RGB`). Adding the
-slider UI and wiring it to those uniforms is the natural next step.
+The base fog parameters are named constants in `sketch.js`: `FOG_NEAR` and
+`FOG_FAR` define the default fog band, `FOG_RGB` the fog/background color, and
+`FOG_OFFSET_MIN` / `FOG_OFFSET_MAX` the range the slider can shift that band
+over. The fog color (`FOG_RGB`) is still fixed; adding a color control would be
+a natural further extension.
